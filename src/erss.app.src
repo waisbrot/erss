@@ -1,3 +1,4 @@
+% -*- mode: erlang; -*-
 {application, erss,
  [
   {description, ""},
@@ -5,8 +6,9 @@
   {modules, [erss]},
   {registered, []},
   {applications, [
-                  kernel,
-                  stdlib
+                  kernel
+		 ,stdlib
+		 ,xmerl
                  ]},
   {mod, { erss_app, []}},
   {env, []}

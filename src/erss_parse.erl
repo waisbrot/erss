@@ -1,47 +1,109 @@
 %%% @copyright (C) 2014, Imprivata
 %%% @doc
-%%% 
+%%% Parse XML that represents RSS or Atom feeds and produce an Erlang
+%%% record.
+%%% Strings returned by this code are IO-lists (deep lists).
 %%% @end
 %%% Created :  9 Mar 2014 by Nathaniel Waisbrot <nwaisbrot@imprivata.com>
 -module(erss_parse).
 -author('nwaisbrot@imprivata.com').
 
--export([parse_file/1]).
+-export([parse_file/1, parse_string/1]).
 -include("erss.hrl").
+-include_lib("xmerl/include/xmerl.hrl").
 
--spec parse_file(string()) -> ok.
+-spec parse_file(string()) -> {ok, #rss{}}.
 parse_file(Filename) ->
     {ok, Binary} = file:read_file(Filename),
-    {Element, Rest} = xmerl_scan:string(Binary),
-    io:format("Result = ~p ~p~n", [Element, Rest]),
-    AccOut#rss2.title,
-    ok.
+    parse_string(Binary).
 
-handle_sax(startDocument, State) ->
-    State;
-handle_sax(endDocument, State) ->
-    State;
-handle_sax({startPrefixMapping, _Prefix, _URI}, State) ->
-    State;
-handle_sax({endPrefixMapping, _Prefix}, State) ->
-    State;
+-spec parse_string(string() | binary()) -> {ok, #rss{}}.
+parse_string(XmlString) when is_binary(XmlString) ->
+    parse_string(binary_to_list(XmlString));
+parse_string(XmlString) when is_list(XmlString) ->
+    %% Remove whitespace-only text elements
+    Acc = fun(#xmlText{value = " ", pos = P}, Acc, S) ->
+		  {Acc, P, S};
+	     (X, Acc, S) ->
+		  {[X|Acc], S}
+	  end,
+    {Element, []} = xmerl_scan:string(XmlString, [{space, normalize}, {acc_fun, Acc}]),
+    case decode_rss(Element) of
+	RssData = #rss{} ->
+	    {ok, RssData}
+    end.
 
-handle_sax({startElement, _Uri, "rss", _Prefix, [#attribute{localName = "version", value = <<"2.0">>}|_RestAttrs]}, no_state) ->
-    io:format("rss 2.0~n",[]),
-    #rss2{tag = "rss"};
-handle_sax({startElement, Uri, "rss", Prefix, [_HeadAttr|RestAttrs]}, no_state) ->
-    handle_sax({startElement, Uri, "rss", Prefix, RestAttrs}, no_state);
-handle_sax({startElement, _Uri, _LocalName, _Prefix, _Attributes}, no_state) ->
-    no_state;
-handle_sax(Start = {startElement, _, _, _, _}, State = #rss2{}) ->
-    erss_rss:handle_sax(Start, State);
+decode_rss([Element]) ->
+    decode_rss(Element);    
+decode_rss(#xmlElement{name = rss, attributes = Attrs, content = Content}) ->
+    [_Version] = lists:filtermap(fun (#xmlAttribute{name = version, value = Vers}) -> {true, Vers};
+				    (_) -> false
+				end,
+				Attrs),
+    decode_rss(Content);
+decode_rss(#xmlElement{name = channel, content = Content}) ->
+    decode_rss(Content, #rss{}).
 
-handle_sax({endElement, _Uri, _LocalName, _Prefix}, State) ->
+-define(channel_element(Name), 
+	decode_rss([#xmlElement{name = Name, content = Content} | Rest], State) ->
+	       decode_rss(Rest, State#rss{Name = extract_text(Content)})).
+decode_rss([], State) ->
     State;
-handle_sax({characters, _Characters}, State) ->
+decode_rss([#xmlElement{name = item, content = Content}|Rest], State) ->
+    decode_rss(Rest, State#rss{items = [decode_item(Content, #item{}) | State#rss.items]});
+?channel_element(title);
+?channel_element(link);
+?channel_element(description);
+?channel_element(language);
+?channel_element(copyright);
+?channel_element(managingEditor);
+?channel_element(webMaster);
+?channel_element(pubDate);
+?channel_element(lastBuildDate);
+?channel_element(category);
+?channel_element(generator);
+?channel_element(docs);
+?channel_element(cloud);
+?channel_element(ttl);
+decode_rss([#xmlElement{name = image, content = Content}|Rest], State) ->
+    decode_rss(Rest, State#rss{image = decode_image(Content, #image{})});
+?channel_element(image);
+?channel_element(rating);
+?channel_element(textInput);
+?channel_element(skipHours);
+?channel_element(skipDays).
+
+-define(item_element(Name),
+	decode_item([#xmlElement{name = Name, content = Content}| Rest], State) ->
+	       decode_item(Rest, State#item{Name = extract_text(Content)})).
+decode_item([], State) ->
     State;
-handle_sax({ignorableWhitespace, _Characters}, State) ->
-    State;
-handle_sax({processingInstruction, _Target, _Data}, State) ->
+?item_element(title);
+?item_element(link);
+?item_element(description);
+?item_element(author);
+?item_element(category);
+?item_element(comments);
+?item_element(enclosure);
+?item_element(guid);
+?item_element(pubDate);
+?item_element(source).
+
+extract_text(List) when is_list(List) ->
+    extract_text(List, []).
+extract_text([#xmlText{value = Text}|Rest], Acc) ->
+    extract_text(Rest, [Text | Acc]);
+extract_text([], Acc) ->
+    Acc.
+
+-define(image_element(Name),
+	decode_image([#xmlElement{name = Name, content = Content}|Rest], State) ->
+	       decode_image(Rest, State#image{Name = extract_text(Content)})).
+?image_element(title);
+?image_element(url);
+?image_element(link);
+?image_element(width);
+?image_element(height);
+?image_element(description);
+decode_image([], State) ->
     State.
-
