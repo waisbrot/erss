@@ -1,0 +1,14 @@
+{application, erss,
+ [
+  {description, ""},
+  {vsn, "1.0.0"},
+  {modules, [erss]},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { erss_app, []}},
+  {env, []}
+ ]}.
+
