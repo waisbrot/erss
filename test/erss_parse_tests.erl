@@ -13,16 +13,15 @@
 -define(BASIC_DIR, "../test/data/basic").
 
 parse_test_() ->
-    {"Parsing RSS", [make_test("Basic RSS examples", ?BASIC_DIR)]}.
+    {"Parsing RSS", [make_test("Basic RSS examples", ?BASIC_DIR)
+		    ,make_test("well-formed RSS examples", ?WELLFORMED_DIR)
+		    ]}.
 
 rss_2_test() ->
     {ok, Result} = erss_parse:parse_file([?BASIC_DIR, $/, "examples", $/, "sample-rss-2.xml"]),
     ?assertEqual(["Liftoff News"], Result#rss.title),
     ?assert(lists:any(fun (El) -> El#item.title =:= ["The Engine That Does More"] end, Result#rss.items)).
 
-wellformed_test_x() ->
-    make_test("well-formed RSS examples", ?WELLFORMED_DIR).
-	
 make_test(Description, Dir) ->
     {ok, Filenames} = file:list_dir_all(Dir),
     {Description, rss_suites(Dir, Filenames)}.

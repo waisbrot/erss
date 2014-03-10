@@ -67,7 +67,6 @@ decode_rss([#xmlElement{name = item, content = Content}|Rest], State) ->
 ?channel_element(ttl);
 decode_rss([#xmlElement{name = image, content = Content}|Rest], State) ->
     decode_rss(Rest, State#rss{image = decode_image(Content, #image{})});
-?channel_element(image);
 ?channel_element(rating);
 ?channel_element(textInput);
 ?channel_element(skipHours);
