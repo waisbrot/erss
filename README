@@ -1,8 +1,0 @@
-Dependencies
-. rebar
-. make
-
-Build
-To build the erss library just run make.
-$ make
-
