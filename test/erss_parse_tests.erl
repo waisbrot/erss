@@ -1,10 +1,10 @@
-%%% @copyright (C) 2014, Imprivata
+%%% @copyright (C) 2014, Nathaniel Waisbrot
 %%% @doc
 %%% 
 %%% @end
-%%% Created :  9 Mar 2014 by Nathaniel Waisbrot <nwaisbrot@imprivata.com>
+%%% Created :  9 Mar 2014 by Nathaniel Waisbrot <code@waisbrot.net>
 -module(erss_parse_tests).
--author('nwaisbrot@imprivata.com').
+-author('code@waisbrot.net').
 
 -include_lib("eunit/include/eunit.hrl").
 -include("erss.hrl").
@@ -19,8 +19,11 @@ parse_test_() ->
 
 rss_2_test() ->
     {ok, Result} = erss_parse:parse_file([?BASIC_DIR, $/, "examples", $/, "sample-rss-2.xml"]),
-    ?assertEqual(["Liftoff News"], Result#rss.title),
-    ?assert(lists:any(fun (El) -> El#item.title =:= ["The Engine That Does More"] end, Result#rss.items)).
+    #{ "title" := Title, "item" := Items, type := Type, version := Version } = Result,
+    ?assertEqual(<<"Liftoff News">>, Title),
+    ?assertEqual(rss, Type),
+    ?assertEqual(<<"2.0">>, Version),
+    ?assert(lists:any(fun (#{"title" := ElTitle}) -> ElTitle =:= <<"The Engine That Does More">> end, Items)).
 
 make_test(Description, Dir) ->
     {ok, Filenames} = file:list_dir_all(Dir),

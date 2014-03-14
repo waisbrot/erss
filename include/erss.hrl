@@ -1,9 +1,9 @@
-%%% @copyright (C) 2014, Imprivata
+%%% @copyright (C) 2014, Nathaniel Waisbrot
 %%% @doc
 %%% 
 %%% @end
-%%% Created :  9 Mar 2014 by Nathaniel Waisbrot <nwaisbrot@imprivata.com>
--author('nwaisbrot@imprivata.com').
+%%% Created :  9 Mar 2014 by Nathaniel Waisbrot <code@waisbrot.net>
+-author('code@waisbrot.net').
 
 -record(item,
 	{
@@ -15,7 +15,7 @@
 	, comments	:: iodata() % URL of a page for comments relating to the item.
 	, enclosure	:: iodata() % Describes a media object that is attached to the item.
 	, guid		:: iodata() % A string that uniquely identifies the item.
-	, pubDate	:: iodata() % Indicates when the item was published.
+	, pubdate	:: iodata() % Indicates when the item was published.
 	, source	:: iodata() % The RSS channel that the item came from
 	}).
 
@@ -36,10 +36,10 @@
 	, description	:: iodata()
 	, language	:: iodata()
 	, copyright	:: iodata()
-	, managingEditor:: iodata()
-	, webMaster	:: iodata()
-	, pubDate	:: iodata()
-	, lastBuildDate	:: iodata()
+	, managingeditor:: iodata()
+	, webmaster	:: iodata()
+	, pubdate	:: iodata()
+	, lastbuilddate	:: iodata()
 	, category	:: iodata()
 	, generator	:: iodata()
 	, docs		:: iodata()
@@ -47,8 +47,8 @@
 	, ttl		:: iodata()
 	, image		:: #image{}
 	, rating	:: iodata()
-	, textInput	:: iodata()
-	, skipHours	:: iodata()
-	, skipDays	:: iodata()
+	, textinput	:: iodata()
+	, skiphours	:: iodata()
+	, skipdays	:: iodata()
 	, items = []	:: [#item{},...]
 	}).
